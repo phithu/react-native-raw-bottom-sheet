@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   Animated,
   PanResponder,
-  Platform
+  Platform,
 } from "react-native";
 import styles from "./style";
 
@@ -16,7 +16,7 @@ const SUPPORTED_ORIENTATIONS = [
   "portrait-upside-down",
   "landscape",
   "landscape-left",
-  "landscape-right"
+  "landscape-right",
 ];
 
 class RBSheet extends Component {
@@ -25,36 +25,40 @@ class RBSheet extends Component {
     this.state = {
       modalVisible: false,
       animatedHeight: new Animated.Value(0),
-      pan: new Animated.ValueXY()
+      pan: new Animated.ValueXY(),
     };
 
     this.createPanResponder(props);
   }
 
   setModalVisible(visible, props) {
-    const { height, minClosingHeight, openDuration, closeDuration, onClose, onOpen } = this.props;
+    const { height, minClosingHeight, duration, onClose, onOpen } = this.props;
     const { animatedHeight, pan } = this.state;
     if (visible) {
       this.setState({ modalVisible: visible });
-      if (typeof onOpen === "function") onOpen(props);
+      if (typeof onOpen === "function") {
+        onOpen(props);
+      }
       Animated.timing(animatedHeight, {
-        useNativeDriver: false,
         toValue: height,
-        duration: openDuration
+        duration,
+        useNativeDriver: !!this.props.useNativeDriver,
       }).start();
     } else {
       Animated.timing(animatedHeight, {
-        useNativeDriver: false,
         toValue: minClosingHeight,
-        duration: closeDuration
+        duration,
+        useNativeDriver: !!this.props.useNativeDriver,
       }).start(() => {
         pan.setValue({ x: 0, y: 0 });
         this.setState({
           modalVisible: visible,
-          animatedHeight: new Animated.Value(0)
+          animatedHeight: new Animated.Value(0),
         });
 
-        if (typeof onClose === "function") onClose(props);
+        if (typeof onClose === "function") {
+          onClose(props);
+        }
       });
     }
   }
@@ -66,16 +70,16 @@ class RBSheet extends Component {
       onStartShouldSetPanResponder: () => closeOnDragDown,
       onPanResponderMove: (e, gestureState) => {
         if (gestureState.dy > 0) {
-          Animated.event([null, { dy: pan.y }], { useNativeDriver: false })(e, gestureState);
+          Animated.event([null, { dy: pan.y }])(e, gestureState);
         }
       },
       onPanResponderRelease: (e, gestureState) => {
         if (height / 4 - gestureState.dy < 0) {
           this.setModalVisible(false);
         } else {
-          Animated.spring(pan, { toValue: { x: 0, y: 0 }, useNativeDriver: false }).start();
+          Animated.spring(pan, { toValue: { x: 0, y: 0 } }).start();
         }
-      }
+      },
     });
   }
 
@@ -91,16 +95,17 @@ class RBSheet extends Component {
     const {
       animationType,
       closeOnDragDown,
-      dragFromTopOnly,
       closeOnPressMask,
       closeOnPressBack,
       children,
       customStyles,
-      keyboardAvoidingViewEnabled
+      keyboardAvoidingViewEnabled,
+      useNativeDriver,
+      ...rest
     } = this.props;
     const { animatedHeight, pan, modalVisible } = this.state;
     const panStyle = {
-      transform: pan.getTranslateTransform()
+      transform: pan.getTranslateTransform(),
     };
 
     return (
@@ -110,8 +115,11 @@ class RBSheet extends Component {
         visible={modalVisible}
         supportedOrientations={SUPPORTED_ORIENTATIONS}
         onRequestClose={() => {
-          if (closeOnPressBack) this.setModalVisible(false);
+          if (closeOnPressBack) {
+            this.setModalVisible(false);
+          }
         }}
+        {...rest}
       >
         <KeyboardAvoidingView
           enabled={keyboardAvoidingViewEnabled}
@@ -124,15 +132,17 @@ class RBSheet extends Component {
             onPress={() => (closeOnPressMask ? this.close() : null)}
           />
           <Animated.View
-            {...(!dragFromTopOnly && this.panResponder.panHandlers)}
-            style={[panStyle, styles.container, { height: animatedHeight }, customStyles.container]}
+            {...this.panResponder.panHandlers}
+            style={[
+              panStyle,
+              styles.container,
+              { height: animatedHeight },
+              customStyles.container]}
           >
             {closeOnDragDown && (
-              <View
-                {...(dragFromTopOnly && this.panResponder.panHandlers)}
-                style={styles.draggableContainer}
-              >
-                <View style={[styles.draggableIcon, customStyles.draggableIcon]} />
+              <View style={styles.draggableContainer}>
+                <View
+                  style={[styles.draggableIcon, customStyles.draggableIcon]}/>
               </View>
             )}
             {children}
@@ -147,34 +157,30 @@ RBSheet.propTypes = {
   animationType: PropTypes.oneOf(["none", "slide", "fade"]),
   height: PropTypes.number,
   minClosingHeight: PropTypes.number,
-  openDuration: PropTypes.number,
-  closeDuration: PropTypes.number,
+  duration: PropTypes.number,
   closeOnDragDown: PropTypes.bool,
   closeOnPressMask: PropTypes.bool,
-  dragFromTopOnly: PropTypes.bool,
   closeOnPressBack: PropTypes.bool,
   keyboardAvoidingViewEnabled: PropTypes.bool,
   customStyles: PropTypes.objectOf(PropTypes.object),
   onClose: PropTypes.func,
   onOpen: PropTypes.func,
-  children: PropTypes.node
+  children: PropTypes.node,
 };
 
 RBSheet.defaultProps = {
   animationType: "none",
   height: 260,
   minClosingHeight: 0,
-  openDuration: 300,
-  closeDuration: 200,
+  duration: 300,
   closeOnDragDown: false,
-  dragFromTopOnly: false,
   closeOnPressMask: true,
   closeOnPressBack: true,
   keyboardAvoidingViewEnabled: Platform.OS === "ios",
   customStyles: {},
   onClose: null,
   onOpen: null,
-  children: <View />
+  children: <View/>,
 };
 
 export default RBSheet;
