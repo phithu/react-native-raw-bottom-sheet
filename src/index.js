@@ -42,13 +42,13 @@ class RBSheet extends Component {
       Animated.timing(animatedHeight, {
         toValue: height,
         duration,
-        useNativeDriver: !!this.props.useNativeDriver,
+        useNativeDriver: false,
       }).start();
     } else {
       Animated.timing(animatedHeight, {
         toValue: minClosingHeight,
         duration,
-        useNativeDriver: !!this.props.useNativeDriver,
+        useNativeDriver: false,
       }).start(() => {
         pan.setValue({ x: 0, y: 0 });
         this.setState({
@@ -100,8 +100,6 @@ class RBSheet extends Component {
       children,
       customStyles,
       keyboardAvoidingViewEnabled,
-      useNativeDriver,
-      ...rest
     } = this.props;
     const { animatedHeight, pan, modalVisible } = this.state;
     const panStyle = {
@@ -119,7 +117,6 @@ class RBSheet extends Component {
             this.setModalVisible(false);
           }
         }}
-        {...rest}
       >
         <KeyboardAvoidingView
           enabled={keyboardAvoidingViewEnabled}
