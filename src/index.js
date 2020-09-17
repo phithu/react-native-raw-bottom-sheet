@@ -100,6 +100,7 @@ class RBSheet extends Component {
       children,
       customStyles,
       keyboardAvoidingViewEnabled,
+      ...rest
     } = this.props;
     const { animatedHeight, pan, modalVisible } = this.state;
     const panStyle = {
@@ -108,7 +109,6 @@ class RBSheet extends Component {
 
     return (
       <Modal
-        statusBarTranslucent={true}
         animationType={animationType}
         visible={modalVisible}
         supportedOrientations={SUPPORTED_ORIENTATIONS}
@@ -117,6 +117,7 @@ class RBSheet extends Component {
             this.setModalVisible(false);
           }
         }}
+        {...rest}
       >
         <KeyboardAvoidingView
           enabled={keyboardAvoidingViewEnabled}
